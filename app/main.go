@@ -1,18 +1,20 @@
 package main
 
 import (
-	"strconv"
-	"os"
-	"encoding/csv"
 	"bufio"
-	"github.com/pamungkaski/golang-k-nearest-neighbors"
+	"encoding/csv"
+	"fmt"
 	"io"
 	"log"
-	"fmt"
-	"time"
 	"math/rand"
+	"os"
+	"strconv"
+	"time"
+
+	"github.com/pamungkaski/golang-k-nearest-neighbors"
 )
 
+// TakeRandom will split train data into 200 Validation data and 600 Train data in random manner.
 func TakeRandom(data []knn.Data) ([]knn.Data, []knn.Data) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	val := make([]knn.Data, 200)
@@ -27,7 +29,8 @@ func TakeRandom(data []knn.Data) ([]knn.Data, []knn.Data) {
 	return val, data
 }
 
-func StringtoData(line []string) (knn.Data) {
+// StringtoData parse data from a slice of string into knn.Data form.
+func StringtoData(line []string) knn.Data {
 	var dt knn.Data
 	var err error
 	dt.Name = line[0]
@@ -56,7 +59,7 @@ func StringtoData(line []string) (knn.Data) {
 	return dt
 }
 
-func main()  {
+func main() {
 	///// DATA READING
 	csvFile, _ := os.Open("DataTrain_Tugas3_AI.csv")
 	reader := csv.NewReader(bufio.NewReader(csvFile))
@@ -65,7 +68,7 @@ func main()  {
 	// K-Fold Cross Validation
 	var data []knn.Data
 	reader.Read()
-	for  {
+	for {
 		line, err := reader.Read()
 		if err == io.EOF {
 			break
@@ -76,16 +79,16 @@ func main()  {
 		dt := StringtoData(line)
 		data = append(data, dt)
 	}
-
+	// Split train data into Validation data and Test data.
 	val, tren := TakeRandom(data)
 	best := 1
 	acc := 0.0
 
-	for i := 1; i <= 200;  i++{
+	for i := 1; i <= 200; i++ {
 		kalg := knn.NewNearestNeighbors(i)
 		right := 0
 
-		for v:= 0; v < 200; v++ {
+		for v := 0; v < 200; v++ {
 			a := val[v]
 			kwey := kalg.Exec(a, tren)
 			if kwey == a.Y {
@@ -94,7 +97,7 @@ func main()  {
 		}
 
 		if float64(right)/200.0000 > acc {
-			acc = float64(right)/200.0000
+			acc = float64(right) / 200.0000
 			best = i
 		}
 	}
@@ -108,7 +111,7 @@ func main()  {
 	defer csvFile.Close()
 	var train []knn.Data
 	reader.Read()
-	for  {
+	for {
 		line, err := reader.Read()
 		if err == io.EOF {
 			break
@@ -126,7 +129,7 @@ func main()  {
 	defer csvFile.Close()
 	var test []knn.Data
 	reader.Read()
-	for  {
+	for {
 		line, err := reader.Read()
 		if err == io.EOF {
 			break
@@ -138,7 +141,7 @@ func main()  {
 		test = append(test, dt)
 	}
 
-	kalg := knn.NewNearestNeighbors(12)
+	kalg := knn.NewNearestNeighbors(best)
 	for index, a := range test {
 		test[index].Y = kalg.Exec(a, train)
 	}
